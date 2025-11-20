@@ -1,0 +1,1 @@
+# Этот файл нужен для того, чтобы Django распознал management commands

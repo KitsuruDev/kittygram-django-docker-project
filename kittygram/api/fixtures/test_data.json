@@ -1,0 +1,98 @@
+[
+{
+  "model": "auth.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$P0d0FXzvm0LVksZVb6TaWL$IRLeCNATC8T2hHVb9I1IQHhs6ZF4mx0PJk3tDZZLKt4=",
+    "username": "admin",
+    "email": "admin@example.com",
+    "is_superuser": true,
+    "is_staff": true,
+    "is_active": true
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$Nu7Zx0C5jis9b7tLI5zoEj$Pjd73WPxZBOeScjAWa4bsr3P/AfdEng/jt7aJTHROxs=",
+    "username": "tester_1",
+    "email": "tester_1@example.com",
+    "is_superuser": false,
+    "is_staff": false,
+    "is_active": true
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$vAnTMoMcOpAEhMV8L6A8nL$d4BuTVmT2QoR+tnEhB/nQ9lWHx5InAhWM/rT3YA/NIc=",
+    "username": "tester_2",
+    "email": "tester_2@example.com",
+    "is_superuser": false,
+    "is_staff": false,
+    "is_active": true
+  }
+},
+{
+  "model": "api.post",
+  "pk": 1,
+  "fields": {
+    "title": "Мой пушистый друг",
+    "description": "Это мой любимый кот, он очень игривый и ласковый!",
+    "author": 2,
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+},
+{
+  "model": "api.post",
+  "pk": 2,
+  "fields": {
+    "title": "Кошачье счастье",
+    "description": "Просто наслаждаемся солнечным днем вместе с моим питомцем.",
+    "author": 2,
+    "created_at": "2024-01-15T11:00:00Z"
+  }
+},
+{
+  "model": "api.post",
+  "pk": 3,
+  "fields": {
+    "title": "Усатый полосатый",
+    "description": "Сегодня мой кот решил порадовать меня своими акробатическими трюками!",
+    "author": 2,
+    "created_at": "2024-01-15T12:00:00Z"
+  }
+},
+{
+  "model": "api.post",
+  "pk": 4,
+  "fields": {
+    "title": "Мой британский котик",
+    "description": "Познакомьтесь с моим гордым британским короткошерстным котом.",
+    "author": 3,
+    "created_at": "2024-01-15T13:00:00Z"
+  }
+},
+{
+  "model": "api.post",
+  "pk": 5,
+  "fields": {
+    "title": "Кошачьи проделки",
+    "description": "Сегодня мой кот устроил настоящий хаос в квартире, но он такой милый, что нельзя сердиться!",
+    "author": 3,
+    "created_at": "2024-01-15T14:00:00Z"
+  }
+},
+{
+  "model": "api.post",
+  "pk": 6,
+  "fields": {
+    "title": "Отдых после игр",
+    "description": "Наигрался и уснул в самой неудобной позе, как это обычно бывает с котами.",
+    "author": 3,
+    "created_at": "2024-01-15T15:00:00Z"
+  }
+}
+]

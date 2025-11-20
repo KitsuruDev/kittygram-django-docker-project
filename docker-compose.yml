@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: kittygram_backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./kittygram:/app/kittygram
+      - static_volume:/var/www/kittygram/static
+      - media_volume:/var/www/kittygram/media
+      - ./.env:/app/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=kittygram.settings
+    env_file:
+      - .env
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py createsuperuser --noinput --username admin --email admin@example.com || true &&
+             gunicorn kittygram.wsgi:application --bind 0.0.0.0:8080 --workers 3"
+
+volumes:
+  static_volume:
+  media_volume:
