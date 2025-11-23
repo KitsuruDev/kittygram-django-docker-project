@@ -140,10 +140,26 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS настройки
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    "http://localhost:8000", # для теста
+    "http://127.0.0.1:8000", # для теста
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF настройки
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Чтобы JavaScript мог читать CSRF токен
+CSRF_USE_SESSIONS = False
+
+# Сессионные куки
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_HTTPONLY = True
 
 # REST Framework
 REST_FRAMEWORK = {
