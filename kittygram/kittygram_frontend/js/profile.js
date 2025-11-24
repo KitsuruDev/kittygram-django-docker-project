@@ -41,16 +41,25 @@ function setupEventListeners() {
     // Кнопка выхода
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         try {
-            await fetch(`${API_BASE}/auth/logout/`, {
+            const response = await fetch(`${API_BASE}/auth/logout/`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
-                    'X-CSRFToken': getCSRFToken()
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json'
                 }
             });
-            window.location.href = 'login.html';
+            
+            if (response.ok) {
+                console.log('✅ Выход выполнен успешно');
+                window.location.href = 'login.html';
+            } else {
+                console.warn('⚠️ Ошибка при выходе, но перенаправляем на логин');
+                window.location.href = 'login.html';
+            }
         } catch (error) {
-            console.error('Ошибка при выходе:', error);
+            console.error('❌ Ошибка при выходе:', error);
+            window.location.href = 'login.html';
         }
     });
     

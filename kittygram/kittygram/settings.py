@@ -137,29 +137,49 @@ LOGOUT_REDIRECT_URL = '/api/auth/login/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS настройки
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8000", # для теста
-    "http://127.0.0.1:8000", # для теста
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
 # CSRF настройки
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False  # Чтобы JavaScript мог читать CSRF токен
 CSRF_USE_SESSIONS = False
+CSRF_COOKIE_SECURE = False  # Для разработки, в production должно быть True
+
+# Добавьте эту настройку
+CSRF_COOKIE_NAME = "csrftoken"
 
 # Сессионные куки
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Для разработки
+
+# CORS настройки
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Добавьте эти настройки для CORS
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # REST Framework
 REST_FRAMEWORK = {
@@ -168,6 +188,5 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
     ],
 }

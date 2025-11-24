@@ -1,5 +1,22 @@
 const API_BASE = 'http://localhost:8000/api';
 
+// Функция для получения CSRF токена
+async function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 // Функция для отображения сообщений
 function showMessage(message, type = 'error') {
     const messageDiv = document.getElementById('message');
@@ -14,6 +31,11 @@ function showMessage(message, type = 'error') {
     }
 }
 
+// Получаем CSRF токен при загрузке страницы
+document.addEventListener('DOMContentLoaded', async () => {
+    await getCSRFToken();
+});
+
 // Обработка формы входа
 if (document.getElementById('loginForm')) {
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -25,24 +47,40 @@ if (document.getElementById('loginForm')) {
             password: formData.get('password')
         };
         
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        submitButton.textContent = 'Вход...';
+        submitButton.disabled = true;
+        
         try {
+            const csrfToken = await getCSRFToken();
+            
             const response = await fetch(`${API_BASE}/auth/login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
+                    'X-CSRFToken': csrfToken || ''
                 },
                 credentials: 'include',
                 body: JSON.stringify(data)
             });
             
+            const result = await response.json();
+            
             if (response.ok) {
-                window.location.href = 'posts.html';
+                showMessage('Вход выполнен успешно! Перенаправление...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'posts.html';
+                }, 1000);
             } else {
-                showMessage('Неверное имя пользователя или пароль');
+                showMessage(result.error || 'Ошибка при входе');
             }
         } catch (error) {
-            showMessage('Ошибка при входе в систему');
+            console.error('Ошибка при входе:', error);
+            showMessage('Ошибка сети при попытке входа');
+        } finally {
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
         }
     });
 }
@@ -60,12 +98,30 @@ if (document.getElementById('registerForm')) {
             password_confirm: formData.get('password_confirm')
         };
         
+        // Проверка паролей на клиенте
+        if (data.password !== data.password_confirm) {
+            showMessage('Пароли не совпадают');
+            return;
+        }
+        
+        if (data.password.length < 8) {
+            showMessage('Пароль должен содержать минимум 8 символов');
+            return;
+        }
+        
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        submitButton.textContent = 'Регистрация...';
+        submitButton.disabled = true;
+        
         try {
+            const csrfToken = await getCSRFToken();
+            
             const response = await fetch(`${API_BASE}/auth/register/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
+                    'X-CSRFToken': csrfToken || ''
                 },
                 credentials: 'include',
                 body: JSON.stringify(data)
@@ -74,8 +130,7 @@ if (document.getElementById('registerForm')) {
             const result = await response.json();
             
             if (response.ok) {
-                showMessage('Регистрация успешна! Перенаправление...', 'success');
-                // Автоматический редирект после успешной регистрации
+                showMessage('Регистрация успешна! Вы автоматически вошли в систему.', 'success');
                 setTimeout(() => {
                     window.location.href = 'posts.html';
                 }, 2000);
@@ -84,6 +139,8 @@ if (document.getElementById('registerForm')) {
                     showMessage(result.error);
                 } else if (result.username) {
                     showMessage(result.username[0]);
+                } else if (result.email) {
+                    showMessage(result.email[0]);
                 } else if (result.password) {
                     showMessage(result.password[0]);
                 } else {
@@ -91,24 +148,11 @@ if (document.getElementById('registerForm')) {
                 }
             }
         } catch (error) {
-            showMessage('Ошибка при регистрации');
+            console.error('Ошибка при регистрации:', error);
+            showMessage('Ошибка сети при регистрации');
+        } finally {
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
         }
     });
-}
-
-// Получение CSRF токена
-function getCSRFToken() {
-    const name = 'csrftoken';
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
 }

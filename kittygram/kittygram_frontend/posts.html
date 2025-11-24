@@ -48,6 +48,42 @@
                     </form>
                 </div>
             </div>
+            
+            <!-- Модальное окно для редактирования поста -->
+            <div id="editPostModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>Редактировать пост</h3>
+                    <form id="editPostForm">
+                        <input type="hidden" id="editPostId" name="id">
+                        
+                        <div class="form-group">
+                            <label for="editPostTitle">Название:</label>
+                            <input type="text" id="editPostTitle" name="title" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPostDescription">Описание:</label>
+                            <textarea id="editPostDescription" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPostImage">Новая фотография:</label>
+                            <input type="file" id="editPostImage" name="image" accept="image/*">
+                            <small style="color: #666; font-size: 0.85em;">Оставьте пустым, чтобы сохранить текущее изображение</small>
+                        </div>
+                        
+                        <div id="currentImageContainer" class="current-image">
+                            <!-- Здесь будет отображаться текущее изображение -->
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Сохранить</button>
+                            <button type="button" class="btn secondary" onclick="document.getElementById('editPostModal').style.display = 'none'">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </main>
     </div>
     <script src="js/posts.js"></script>
