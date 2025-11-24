@@ -446,7 +446,7 @@ nav {
     background: #545b62;
 }
 
-/* Стили для уведомлений */
+/* Уведомления */
 .notification {
     position: fixed;
     top: 20px;
@@ -461,12 +461,7 @@ nav {
     animation: slideIn 0.3s ease-out;
 }
 
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
+.notification.success { background-color: #4CAF50; }
+.notification.error { background-color: #f44336; }
+.notification.warning { background-color: #ff9800; }
+.notification.info { background-color: #2196F3; }

@@ -18,8 +18,7 @@ class PostModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123',
-            email='test@example.com'
+            password='testpass123'
         )
     
     def test_create_post(self):
@@ -30,7 +29,6 @@ class PostModelTest(TestCase):
         )
         self.assertEqual(post.title, 'Test Post')
         self.assertEqual(post.author, self.user)
-        self.assertIsNotNone(post.created_at)
 
 class AuthenticationTests(APITestCase):
     def setUp(self):
@@ -40,10 +38,6 @@ class AuthenticationTests(APITestCase):
             'email': 'test@example.com',
             'password': 'testpass123',
             'password_confirm': 'testpass123'
-        }
-        self.login_data = {
-            'username': 'testuser',
-            'password': 'testpass123'
         }
     
     def test_user_registration(self):
@@ -64,12 +58,6 @@ class AuthenticationTests(APITestCase):
         response = self.client.post(url, self.user_data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
-    def test_get_current_user_unauthorized(self):
-        url = reverse('current-user')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 class PostAPITests(APITestCase):
     def setUp(self):

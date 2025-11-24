@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
 
 # Application definition
 
@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'kittygram.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': str(BASE_DIR / 'db.sqlite3'),  # Исправлено: преобразование в строку
     }
 }
 
@@ -124,51 +124,64 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/kittygram/static/'
+STATIC_ROOT = BASE_DIR.parent / 'collected_static'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'frontend',
+]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/var/www/kittygram/media/'
+MEDIA_ROOT = BASE_DIR.parent / 'media'
 
 LOGIN_REDIRECT_URL = '/api/posts/'
 LOGOUT_REDIRECT_URL = '/api/auth/login/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Сессионные настройки
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_AGE = 1209600  # 2 недели в секундах
+SESSION_COOKIE_SECURE = False  # True для HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
 # CSRF настройки
 CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://127.0.0.1",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
 
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = False  # Чтобы JavaScript мог читать CSRF токен
-CSRF_USE_SESSIONS = False
-CSRF_COOKIE_SECURE = False  # Для разработки, в production должно быть True
-
-# Добавьте эту настройку
 CSRF_COOKIE_NAME = "csrftoken"
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False # False для JS доступа
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_SECURE = False # True для HTTPS
 
 # Сессионные куки
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # Для разработки
+SESSION_COOKIE_SECURE = False
 
 # CORS настройки
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://127.0.0.1",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
 
-CORS_ALLOW_CREDENTIALS = True
-
-# Добавьте эти настройки для CORS
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -190,3 +203,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 }
+
+# Настройки для загрузки файлов
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000

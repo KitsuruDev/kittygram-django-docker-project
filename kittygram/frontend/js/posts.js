@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = '/api';
 let currentUser = null;
 let postsCache = []; // Кэш постов для быстрого доступа
 
@@ -22,18 +22,55 @@ async function checkAuth() {
         if (response.ok) {
             currentUser = await response.json();
             console.log('Пользователь авторизован:', currentUser.username);
+            updateUIForAuthenticatedUser();
         } else {
-            console.log('Пользователь не авторизован, перенаправление на логин');
-            window.location.href = 'login.html';
+            console.log('Пользователь не авторизован');
+            showAuthMessage();
         }
     } catch (error) {
         console.error('Ошибка при проверке аутентификации:', error);
-        window.location.href = 'login.html';
+        showAuthMessage();
     }
+}
+
+// Обновление UI для авторизованного пользователя
+function updateUIForAuthenticatedUser() {
+    // Показываем кнопки для авторизованных пользователей
+    const authElements = document.querySelectorAll('.auth-required');
+    authElements.forEach(el => el.style.display = 'block');
+    
+    // Обновляем приветствие если есть элемент
+    const greetingEl = document.getElementById('userGreeting');
+    if (greetingEl) {
+        greetingEl.textContent = `Привет, ${currentUser.username}!`;
+    }
+}
+
+// Показать сообщение об необходимости авторизации
+function showAuthMessage() {
+    const container = document.getElementById('postsContainer');
+    if (container) {
+        container.innerHTML = `
+            <div class="auth-message">
+                <h2>Необходима авторизация</h2>
+                <p>Пожалуйста, <a href="login.html">войдите в систему</a> для просмотра постов</p>
+                <button onclick="window.location.href='login.html'" class="btn">Войти</button>
+            </div>
+        `;
+    }
+    
+    // Скрываем кнопки для неавторизованных пользователей
+    const authElements = document.querySelectorAll('.auth-required');
+    authElements.forEach(el => el.style.display = 'none');
 }
 
 // Загрузка постов
 async function loadPosts() {
+    // Если пользователь не авторизован, не загружаем посты
+    if (!currentUser) {
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_BASE}/posts/`, {
             credentials: 'include'
@@ -43,6 +80,9 @@ async function loadPosts() {
             const posts = await response.json();
             postsCache = posts; // Сохраняем в кэш
             displayPosts(posts);
+        } else if (response.status === 401) {
+            console.log('Сессия истекла, требуется повторная авторизация');
+            showAuthMessage();
         }
     } catch (error) {
         console.error('Ошибка при загрузке постов:', error);
@@ -52,7 +92,14 @@ async function loadPosts() {
 // Отображение постов
 function displayPosts(posts) {
     const container = document.getElementById('postsContainer');
+    if (!container) return;
+    
     container.innerHTML = '';
+    
+    if (posts.length === 0) {
+        container.innerHTML = '<p class="no-posts">Пока нет постов. Будьте первым!</p>';
+        return;
+    }
     
     posts.forEach(post => {
         const postElement = createPostElement(post);
@@ -92,90 +139,142 @@ function createPostElement(post) {
 // Настройка обработчиков событий
 function setupEventListeners() {
     // Кнопка профиля
-    document.getElementById('profileBtn').addEventListener('click', () => {
-        window.location.href = 'profile.html';
-    });
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
+    }
     
     // Кнопка выхода
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-        try {
-            const response = await fetch(`${API_BASE}/auth/logout/`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'X-CSRFToken': getCSRFToken(),
-                    'Content-Type': 'application/json'
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/auth/logout/`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Выход выполнен успешно');
+                    window.location.href = 'login.html';
+                } else {
+                    console.warn('⚠️ Ошибка при выходе, но перенаправляем на логин');
+                    window.location.href = 'login.html';
                 }
-            });
-            
-            if (response.ok) {
-                console.log('✅ Выход выполнен успешно');
-                window.location.href = 'login.html';
-            } else {
-                console.warn('⚠️ Ошибка при выходе, но перенаправляем на логин');
-                // Все равно перенаправляем на страницу логина
+            } catch (error) {
+                console.error('❌ Ошибка при выходе:', error);
                 window.location.href = 'login.html';
             }
-        } catch (error) {
-            console.error('❌ Ошибка при выходе:', error);
-            // Все равно перенаправляем на страницу логина
-            window.location.href = 'login.html';
-        }
-    });
+        });
+    }
     
     // Модальное окно создания поста
     const createModal = document.getElementById('createPostModal');
     const createBtn = document.getElementById('createPostBtn');
-    const createCloseBtn = createModal.querySelector('.close');
+    const createCloseBtn = createModal ? createModal.querySelector('.close') : null;
     
-    createBtn.addEventListener('click', () => {
-        createModal.style.display = 'block';
-    });
+    if (createBtn && createModal) {
+        createBtn.addEventListener('click', () => {
+            createModal.style.display = 'block';
+        });
+    }
     
-    createCloseBtn.addEventListener('click', () => {
-        createModal.style.display = 'none';
-    });
+    if (createCloseBtn) {
+        createCloseBtn.addEventListener('click', () => {
+            createModal.style.display = 'none';
+        });
+    }
     
     // Модальное окно редактирования поста
     const editModal = document.getElementById('editPostModal');
-    const editCloseBtn = editModal.querySelector('.close');
+    const editCloseBtn = editModal ? editModal.querySelector('.close') : null;
     
-    editCloseBtn.addEventListener('click', () => {
-        editModal.style.display = 'none';
-    });
+    if (editCloseBtn) {
+        editCloseBtn.addEventListener('click', () => {
+            editModal.style.display = 'none';
+        });
+    }
     
     // Закрытие модальных окон при клике вне их
     window.addEventListener('click', (e) => {
-        if (e.target === createModal) {
+        const createModal = document.getElementById('createPostModal');
+        const editModal = document.getElementById('editPostModal');
+        
+        if (createModal && e.target === createModal) {
             createModal.style.display = 'none';
         }
-        if (e.target === editModal) {
+        if (editModal && e.target === editModal) {
             editModal.style.display = 'none';
         }
     });
     
     // Форма создания поста
-    document.getElementById('createPostForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await createPost();
-    });
+    const createForm = document.getElementById('createPostForm');
+    if (createForm) {
+        createForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await createPost();
+        });
+    }
     
     // Форма редактирования поста
-    document.getElementById('editPostForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await updatePost();
-    });
+    const editForm = document.getElementById('editPostForm');
+    if (editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await updatePost();
+        });
+    }
 }
 
 // Создание поста
 async function createPost() {
+    if (!currentUser) {
+        showNotification('Необходима авторизация для создания постов', 'error');
+        return;
+    }
+    
     const form = document.getElementById('createPostForm');
     const formData = new FormData(form);
     
+    // Проверяем размер файла
+    const imageInput = document.getElementById('createPostImage');
+    if (imageInput && imageInput.files.length > 0) {
+        const file = imageInput.files[0];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        if (file.size > maxSize) {
+            showNotification('Размер файла не должен превышать 10MB', 'error');
+            return;
+        }
+        
+        // Проверяем тип файла
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Разрешены только файлы JPEG, PNG, GIF и WebP', 'error');
+            return;
+        }
+    }
+    
     console.log('📝 Данные формы создания:');
     for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
+        if (key === 'image') {
+            console.log(`${key}:`, value.name, `(${(value.size / 1024 / 1024).toFixed(2)} MB)`);
+        } else {
+            console.log(`${key}:`, value);
+        }
     }
+    
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.textContent = 'Создание...';
+    submitButton.disabled = true;
     
     try {
         await ensureCSRFToken();
@@ -198,6 +297,8 @@ async function createPost() {
             form.reset();
             await loadPosts();
             showNotification('Пост успешно создан!', 'success');
+        } else if (response.status === 413) {
+            showNotification('Файл слишком большой. Максимальный размер: 10MB', 'error');
         } else {
             const errorText = await response.text();
             console.error('❌ Ошибка сервера при создании:', errorText);
@@ -206,11 +307,19 @@ async function createPost() {
     } catch (error) {
         console.error('💥 Сетевая ошибка при создании:', error);
         showNotification('Сетевая ошибка при создании поста', 'error');
+    } finally {
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
     }
 }
 
 // Редактирование поста
 async function editPost(postId) {
+    if (!currentUser) {
+        showNotification('Необходима авторизация для редактирования постов', 'error');
+        return;
+    }
+    
     console.log('Редактирование поста:', postId);
     
     // Находим пост в кэше
@@ -225,7 +334,7 @@ async function editPost(postId) {
     document.getElementById('editPostTitle').value = post.title;
     document.getElementById('editPostDescription').value = post.description || '';
     
-    // Показываем текущее изображение (более компактно)
+    // Показываем текущее изображение
     const currentImageContainer = document.getElementById('currentImageContainer');
     if (post.image) {
         currentImageContainer.innerHTML = `
@@ -241,11 +350,18 @@ async function editPost(postId) {
     
     // Прокручиваем к верху модального окна
     const modalContent = document.querySelector('#editPostModal .modal-content');
-    modalContent.scrollTop = 0;
+    if (modalContent) {
+        modalContent.scrollTop = 0;
+    }
 }
 
 // Обновление поста
 async function updatePost() {
+    if (!currentUser) {
+        showNotification('Необходима авторизация для обновления постов', 'error');
+        return;
+    }
+    
     const form = document.getElementById('editPostForm');
     const formData = new FormData(form);
     const postId = document.getElementById('editPostId').value;
@@ -254,19 +370,12 @@ async function updatePost() {
     
     // Проверяем, было ли выбрано новое изображение
     const imageInput = document.getElementById('editPostImage');
-    if (imageInput.files.length === 0) {
-        // Если новое изображение не выбрано, не включаем поле image в FormData
+    if (imageInput && imageInput.files.length === 0) {
         formData.delete('image');
         console.log('🖼️ Новое изображение не выбрано, сохраняем текущее');
     } else {
         console.log('🖼️ Выбрано новое изображение');
     }
-    
-    // Логируем только текстовые поля для отладки
-    console.log('📝 Текстовые данные:');
-    console.log(' - title:', formData.get('title'));
-    console.log(' - description:', formData.get('description'));
-    console.log(' - image:', formData.get('image') ? 'есть' : 'нет');
     
     const submitButton = form.querySelector('button[type="submit"]');
     const originalText = submitButton.textContent;
@@ -280,7 +389,6 @@ async function updatePost() {
             method: 'PATCH',
             headers: {
                 'X-CSRFToken': getCSRFToken()
-                // Не устанавливаем Content-Type для FormData - браузер сделает это сам
             },
             credentials: 'include',
             body: formData
@@ -296,13 +404,11 @@ async function updatePost() {
             await loadPosts();
             showNotification('Пост успешно обновлен!', 'success');
         } else {
-            // Пытаемся получить детальную информацию об ошибке
             let errorMessage = 'Ошибка при обновлении поста';
             try {
                 const errorResult = await response.json();
                 console.error('❌ Ошибка сервера:', errorResult);
                 
-                // Формируем понятное сообщение об ошибке
                 if (errorResult.title) {
                     errorMessage = `Ошибка в названии: ${errorResult.title.join(', ')}`;
                 } else if (errorResult.description) {
@@ -333,6 +439,11 @@ async function updatePost() {
 
 // Удаление поста
 async function deletePost(postId) {
+    if (!currentUser) {
+        showNotification('Необходима авторизация для удаления постов', 'error');
+        return;
+    }
+    
     if (!confirm('Вы уверены, что хотите удалить этот пост?')) {
         return;
     }
@@ -387,41 +498,12 @@ function getCSRFToken() {
 
 // Функция для показа уведомлений
 function showNotification(message, type = 'info') {
-    // Создаем элемент уведомления
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
     
-    // Стили для уведомления
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        z-index: 10000;
-        max-width: 300px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        animation: slideIn 0.3s ease-out;
-    `;
-    
-    // Цвета в зависимости от типа
-    if (type === 'success') {
-        notification.style.backgroundColor = '#4CAF50';
-    } else if (type === 'error') {
-        notification.style.backgroundColor = '#f44336';
-    } else if (type === 'warning') {
-        notification.style.backgroundColor = '#ff9800';
-    } else {
-        notification.style.backgroundColor = '#2196F3';
-    }
-    
-    // Добавляем в DOM
     document.body.appendChild(notification);
     
-    // Удаляем через 3 секунды
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-in';
         setTimeout(() => {
@@ -444,6 +526,30 @@ if (!document.querySelector('#notification-styles')) {
         @keyframes slideOut {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .auth-message {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .auth-message h2 {
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .auth-message .btn {
+            margin-top: 15px;
+        }
+        
+        .no-posts {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            font-style: italic;
         }
     `;
     document.head.appendChild(style);

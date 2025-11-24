@@ -2,25 +2,30 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Установка зависимостей системы
+# Устанавливаем зависимости для сборки
 RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Копирование requirements и установка Python зависимостей
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Копирование проекта
+RUN pip install -r requirements.txt
+
 COPY . .
 
-# Создание директорий для статики и медиа
-RUN mkdir -p /var/www/kittygram/static
-RUN mkdir -p /var/www/kittygram/media
+WORKDIR /app/kittygram
 
-# Выдача права на выполнение скрипта
-RUN chmod +x scripts/start.sh
+# Создаем необходимые директории
+RUN mkdir -p ../static ../media ../collected_static
 
-EXPOSE 8080
+# Копируем скрипт
+COPY copy_frontend.sh /app/copy_frontend.sh
+RUN chmod +x /app/copy_frontend.sh
 
-CMD ["/app/scripts/start.sh"]
+# Сначала собираем статику Django
+RUN python manage.py collectstatic --noinput --clear
+
+# Потом копируем фронтенд ПОВЕРХ статики Django
+RUN /app/copy_frontend.sh
+
+EXPOSE 8000
