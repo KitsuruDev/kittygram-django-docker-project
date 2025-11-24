@@ -22,6 +22,18 @@ class PostSerializer(serializers.ModelSerializer):
             return obj.author == request.user
         return False
 
+    def update(self, instance, validated_data):
+        # Для PATCH запроса обрабатываем частичное обновление
+        instance.title = validated_data.get('title', instance.title)
+        instance.description = validated_data.get('description', instance.description)
+        
+        # Обновляем изображение только если оно передано
+        if 'image' in validated_data:
+            instance.image = validated_data['image']
+        
+        instance.save()
+        return instance
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, min_length=8, style={'input_type': 'password'}
